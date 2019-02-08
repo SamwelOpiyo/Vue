@@ -1,5 +1,3 @@
-# beerbank
-
 ## Project setup
 ```
 npm install
