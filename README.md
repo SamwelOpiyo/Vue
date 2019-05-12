@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/SamwelOpiyo/Vue.svg?branch=master)](https://travis-ci.org/SamwelOpiyo/Vue)
+
 ## Project setup
 ```
 npm install
