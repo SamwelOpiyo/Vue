@@ -1,13 +1,44 @@
 language: node_js
 node_js:
-  - "12.2.0"
-  - "12.0"
   - "11.0"
   - "10.0"
 
-install:
-  - yarn install
+services:
+  - docker
 
-script:
-  # - yarn run test
-  - yarn run build
+stages:
+  - name: test
+  - name: build
+    if: |
+      tag =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^dev\/v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^release\/v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^prod\/v\d+\.\d+(\.\d+)?(-\S*)?$/
+  - name: deploy
+    if: |
+      tag =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^dev\/v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^release\/v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
+      tag =~ /^prod\/v\d+\.\d+(\.\d+)?(-\S*)?$/
+
+jobs:
+  include:
+    - stage: test
+      install:
+        - yarn install
+      script:
+        # - yarn run test
+        - yarn run build
+
+    - stage: build
+      before_script:
+        - git clone https://$GITHUB_TOKEN@github.com/SamwelOpiyo/turing_devops_challenge.git ../turing_devops_challenge/
+        - cp ../turing_devops_challenge/Vue/Dockerfile ../turing_devops_challenge/Vue/.dockerignore .
+      script:
+        - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+        - docker build -t samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .) .
+        - docker push samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
+        - docker rmi samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
+
+    # - stage: deploy
+      # script: ./deploy
