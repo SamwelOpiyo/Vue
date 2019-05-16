@@ -8,6 +8,7 @@ services:
 
 stages:
   - name: test
+  - name: test-build
   - name: build
     if: |
       tag =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
@@ -21,24 +22,33 @@ stages:
       tag =~ /^release\/v\d+\.\d+(\.\d+)?(-\S*)?$/ || \
       tag =~ /^prod\/v\d+\.\d+(\.\d+)?(-\S*)?$/
 
+install:
+  - yarn install
+
+script:
+  - yarn list
+  # - yarn check
+  # - yarn run test
+
 jobs:
   include:
-    - stage: test
+    - stage: test-build
       install:
         - yarn install
+
       script:
-        # - yarn run test
         - yarn run build
 
     - stage: build
       before_script:
         - git clone https://$GITHUB_TOKEN@github.com/SamwelOpiyo/turing_devops_challenge.git ../turing_devops_challenge/
-        - cp ../turing_devops_challenge/Vue/Dockerfile ../turing_devops_challenge/Vue/.dockerignore .
+        - cp ../turing_devops_challenge/Vue/* .
       script:
         - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
-        - docker build -t samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .) .
-        - docker push samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
-        - docker rmi samwelopiyo/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
+        - docker build -t $DOCKER_HUB_USER/turing_vue:$(echo $TRAVIS_TAG | tr "/" .) .
+        - docker push $DOCKER_HUB_USER/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
+        - docker rmi $DOCKER_HUB_USER/turing_vue:$(echo $TRAVIS_TAG | tr "/" .)
+        - docker logout
 
     # - stage: deploy
       # script: ./deploy
